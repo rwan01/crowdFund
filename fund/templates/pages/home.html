@@ -1,0 +1,470 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home - Crowd-Funding Platform{% endblock %}
+
+{% block hero_section %}
+<!-- Hero Section -->
+<section class="hero text-center">
+    <div class="container">
+        <h1>Fund Ideas That Matter</h1>
+        <p>Support innovative projects and bring creative ideas to life</p>
+        
+        <form class="search-bar" action="{% url 'project_list' %}" method="GET">
+            <input type="text" name="search" placeholder="Search projects by title or tag..." value="{{ request.GET.search }}">
+            <button type="submit"><i class="fas fa-search"></i> Search</button>
+        </form>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<!-- Highest Rated Projects Slider -->
+<section class="container mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 mt-4">
+        <h2 class="m-0">Highest Rated Projects</h2>
+        <a href="{% url 'project_list' %}?sort=rating" class="btn btn-outline-primary btn-sm">View All</a>
+    </div>
+
+    <div id="topRatedCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-inner">
+            {% for project in top_rated_projects %}
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <div class="row">
+                    <div class="col-md-6">
+                        {% if project.main_image %}
+                            <img src="{{ project.main_image.url }}" class="d-block w-100 rounded" alt="{{ project.title }}" style="height: 300px; object-fit: cover;">
+                        {% else %}
+                            <div class="d-flex align-items-center justify-content-center bg-light rounded" style="height:300px;">
+                                <i class="fas fa-image fa-3x text-muted"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 d-flex flex-column justify-content-center">
+                        <h3>{{ project.title }}</h3>
+                        <p class="text-muted">{{ project.get_category_display_name }}</p>
+                        <p>{{ project.description|truncatewords:30 }}</p>
+
+                        <!-- Rating -->
+                        <div class="mb-2">
+                            {% with rating=project.average_rating %}
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= rating %}
+                                    <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                    <i class="far fa-star text-warning"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="ms-1">({{ rating|floatformat:1 }})</span>
+                            {% endwith %}
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="progress-bar mb-2">
+                            <div class="progress" style="width: {{ project.donation_progress }}%"></div>
+                        </div>
+
+                        <div class="project-stats mb-3">
+                            <span>EGP {{ project.current_donations|floatformat:0 }} raised</span>
+                            <span>EGP {{ project.target_amount|floatformat:0 }} goal</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">{{ project.days_remaining }} days left</span>
+                            <a href="{% url 'project_detail' project.id %}" class="btn btn-primary">View Project</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="carousel-item active">
+                <div class="text-center py-5">
+                    <h4>No top-rated projects available</h4>
+                    <p>Be the first to create and rate projects!</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Carousel controls (arrows) -->
+        {% if top_rated_projects.count > 1 %}
+        <button class="carousel-control-prev" type="button" data-bs-target="#topRatedCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#topRatedCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Latest Projects and Featured Projects -->
+<section class="row mb-5">
+    <!-- Latest Projects -->
+    <div class="col-md-6">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Latest Projects</h2>
+            <a href="{% url 'project_list' %}?sort=newest" class="btn btn-outline-primary btn-sm">View All</a>
+        </div>
+
+        {% for project in latest_projects %}
+        <div class="project-card mb-3">
+            <div class="row g-0">
+                <div class="col-md-4">
+                    {% if project.main_image %}
+                        <img src="{{ project.main_image.url }}" class="img-fluid rounded-start" alt="{{ project.title }}" style="height: 120px; width: 100%; object-fit: cover;">
+                    {% else %}
+                        <div class="d-flex align-items-center justify-content-center bg-light rounded-start" style="height:120px;">
+                            <i class="fas fa-image fa-2x text-muted"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-8">
+                    <div class="project-content py-2">
+                        <h5 class="project-title mb-1">{{ project.title|truncatewords:5 }}</h5>
+                        <p class="project-desc mb-1">{{ project.get_category_display_name }}</p>
+
+                        <div class="progress-bar mb-1">
+                            <div class="progress" style="width: {{ project.donation_progress }}%"></div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="project-stats">{{ project.donation_progress|floatformat:0 }}% funded</span>
+                            <a href="{% url 'project_detail' project.id %}" class="btn btn-outline-primary btn-sm">View</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-3">
+            <p>No projects available yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Featured Projects -->
+    <div class="col-md-6">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Featured Projects</h2>
+            <a href="{% url 'project_list' %}?featured=true" class="btn btn-outline-primary btn-sm">View All</a>
+        </div>
+
+        {% for project in featured_projects %}
+        <div class="project-card mb-3">
+            <div class="row g-0">
+                <div class="col-md-4">
+                    {% if project.main_image %}
+                        <img src="{{ project.main_image.url }}" class="img-fluid rounded-start" alt="{{ project.title }}" style="height: 120px; width: 100%; object-fit: cover;">
+                    {% else %}
+                        <div class="d-flex align-items-center justify-content-center bg-light rounded-start" style="height:120px;">
+                            <i class="fas fa-image fa-2x text-muted"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-8">
+                    <div class="project-content py-2">
+                        <h5 class="project-title mb-1">{{ project.title|truncatewords:5 }}</h5>
+                        <p class="project-desc mb-1">{{ project.get_category_display_name }}</p>
+
+                        <div class="progress-bar mb-1">
+                            <div class="progress" style="width: {{ project.donation_progress }}%"></div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="project-stats">{{ project.donation_progress|floatformat:0 }}% funded</span>
+                            <a href="{% url 'project_detail' project.id %}" class="btn btn-outline-primary btn-sm">View</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-3">
+            <p>No featured projects available.</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="container mb-5">
+    <h2 class="section-title">Browse by Category</h2>
+    <div class="categories">
+        {% for value, name in categories %}
+        <a href="{% url 'project_list' %}?category={{ value }}" class="category">
+            <i class="fas 
+                {% if value == 'EDU' %}fa-book
+                {% elif value == 'HEALTH' %}fa-heartbeat
+                {% elif value == 'ART' %}fa-paint-brush
+                {% elif value == 'ENV' %}fa-leaf
+                {% elif value == 'TECH' %}fa-laptop
+                {% elif value == 'FOOD' %}fa-utensils
+                {% else %}fa-folder-open{% endif %}">
+            </i>
+            <span>{{ name }}</span>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+     /* Fix for navbar search bar positioning on home page */
+    .navbar .search-bar {
+        display: flex;
+        margin-left: 15px;
+        margin-right: 15px;
+    }
+    
+    .navbar .search-bar input {
+        border-radius: 50px 0 0 50px;
+        border: none;
+        padding: 10px 20px;
+    }
+    
+    .navbar .search-bar button {
+        border-radius: 0 50px 50px 0;
+        background: var(--accent);
+        border: none;
+        padding: 10px 20px;
+        white-space: nowrap;
+    }
+    
+    /* Ensure the navbar items are properly spaced */
+    .navbar .navbar-nav.ms-3 {
+        margin-left: 0 !important;
+    }
+
+    /* Hero Section */
+    .hero {
+        background: linear-gradient(rgba(78, 84, 200, 0.8), rgba(143, 148, 251, 0.8)), url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 80px 0;
+        text-align: center;
+    }
+    
+    .hero h1 {
+        font-size: 48px;
+        margin-bottom: 20px;
+    }
+    
+    .hero p {
+        font-size: 20px;
+        max-width: 700px;
+        margin: 0 auto 30px;
+    }
+    
+    .search-bar {
+        max-width: 600px;
+        margin: 0 auto;
+        display: flex;
+    }
+    
+    .search-bar input {
+        flex: 1;
+        padding: 15px;
+        border: none;
+        border-radius: 50px 0 0 50px;
+        font-size: 16px;
+    }
+    
+    .search-bar button {
+        padding: 15px 25px;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 0 50px 50px 0;
+        cursor: pointer;
+        font-weight: 500;
+    }
+    
+.carousel-control-prev,
+.carousel-control-next {
+    top: 40%;                  /* position somewhere in the middle */
+    bottom: auto;              /* remove full height */
+    transform: translateY(-50%);
+    width: 40px;               /* keep it tight */
+    height: 40px;              /* smaller clickable area */
+}
+    .carousel-control-prev {
+    left: -50px;  /* push left arrow outside */
+}
+
+.carousel-control-next {
+    right: -50px; /* push right arrow outside */
+}
+    
+    .carousel-control-prev:hover, .carousel-control-next:hover {
+        opacity: 1;
+    }
+    
+    .carousel-control-prev-icon, .carousel-control-next-icon {
+        background-color: var(--primary);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        background-size: 60%;
+    }
+    
+    /* Project Cards */
+    .project-card {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+        margin-bottom: 20px;
+    }
+    
+    .project-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .project-content {
+        padding: 15px;
+    }
+    
+    .project-title {
+        font-size: 18px;
+        margin-bottom: 8px;
+        color: var(--dark);
+    }
+    
+    .project-desc {
+        color: var(--gray);
+        margin-bottom: 12px;
+        font-size: 14px;
+    }
+    
+    .progress-bar {
+        height: 8px;
+        background: #e9ecef;
+        border-radius: 4px;
+        margin-bottom: 12px;
+        overflow: hidden;
+    }
+    
+    .progress {
+        height: 100%;
+        background: linear-gradient(to right, var(--primary), var(--secondary));
+        border-radius: 4px;
+    }
+    
+    .project-stats {
+        font-size: 14px;
+        color: var(--gray);
+    }
+    
+    /* Categories Section */
+    .categories {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 50px;
+    }
+    
+    .category {
+        background: white;
+        padding: 15px 25px;
+        border-radius: 50px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .category i {
+        margin-right: 10px;
+        color: var(--primary);
+    }
+    
+    .category:hover {
+        background: var(--primary);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .category:hover i {
+        color: white;
+    }
+    
+    /* Section Titles */
+    .section-title {
+        text-align: center;
+        margin: 50px 0 30px;
+        color: var(--dark);
+        position: relative;
+    }
+    
+    .section-title:after {
+        content: '';
+        display: block;
+        width: 80px;
+        height: 4px;
+        background: linear-gradient(to right, var(--primary), var(--secondary));
+        margin: 10px auto;
+        border-radius: 2px;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .hero h1 {
+            font-size: 36px;
+        }
+        
+        .hero p {
+            font-size: 18px;
+        }
+        
+        .search-bar {
+            flex-direction: column;
+        }
+        
+        .search-bar input {
+            border-radius: 50px;
+            margin-bottom: 10px;
+        }
+        
+        .search-bar button {
+            border-radius: 50px;
+        }
+        
+        .carousel-control-prev, .carousel-control-next {
+            display: none;
+        }
+        .navbar .search-bar {
+            margin: 10px 0;
+            order: 3; /* Move search to bottom on mobile */
+            width: 100%;
+            flex-grow: 1;
+        }
+        
+        .navbar .navbar-nav.ms-3 {
+            margin-left: auto !important;
+        }
+    }
+    
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize carousel with faster interval
+        const mainCarousel = new bootstrap.Carousel(document.getElementById('topRatedCarousel'), {
+            interval: 2500,
+            wrap: true
+        });
+    });
+</script>
+{% endblock %}

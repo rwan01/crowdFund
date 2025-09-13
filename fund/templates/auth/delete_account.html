@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Account - CrowdFund{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Delete Account</h4>
+                </div>
+                <div class="card-body">
+                    {% if not show_password_field %}
+                        <!-- Initial warning message -->
+                        <div class="alert alert-danger">
+                            <h5 class="alert-heading">Warning!</h5>
+                            <p class="mb-0">You are about to permanently delete your account. This action cannot be undone.</p>
+                        </div>
+                        
+                        <p class="mb-4">All your data, including projects and donations, will be permanently removed from our system.</p>
+                        
+                        <form method="POST">
+                            {% csrf_token %}
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-trash me-1"></i>I understand, delete my account
+                                </button>
+                                <a href="{% url 'profile' %}" class="btn btn-outline-secondary">Cancel</a>
+                            </div>
+                        </form>
+                    {% else %}
+                        <!-- Password confirmation step -->
+                        <div class="alert alert-warning">
+                            <h5 class="alert-heading">Confirm Account Deletion</h5>
+                            <p class="mb-0">For security purposes, please enter your password to confirm account deletion.</p>
+                        </div>
+                        
+                        <form method="POST">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="password" name="password" required 
+                                       placeholder="Enter your password to confirm deletion">
+                            </div>
+                            
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                                {% endfor %}
+                            {% endif %}
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-trash me-1"></i>Confirm Deletion
+                                </button>
+                                <a href="{% url 'profile' %}" class="btn btn-outline-secondary">Cancel</a>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

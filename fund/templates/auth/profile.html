@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Profile - CrowdFund{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Profile Header -->
+    <div class="row mb-5">
+        <div class="col-md-12">
+            <div class="card project-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            {% if user.profile_picture %}
+                                <img src="{{ user.profile_picture.url }}" alt="Profile Picture" 
+                                     class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center mx-auto" 
+                                     style="width: 150px; height: 150px;">
+                                    <i class="fas fa-user fa-3x text-light"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-7">
+                            <h2>{{ user.get_full_name }}</h2>
+                            <p class="text-muted mb-1">{{ user.email }}</p>
+                            <p class="text-muted mb-1">{{ user.mobile_phone }}</p>
+                            {% if user.country %}<p class="text-muted mb-1">{{ user.country }}</p>{% endif %}
+                            
+                            <div class="d-flex gap-2 mt-3">
+                                <a href="{% url 'edit_profile' %}" class="btn btn-primary">
+                                    <i class="fas fa-edit me-1"></i>Edit Profile
+                                </a>
+                                <a href="{% url 'my_projects' %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-project-diagram me-1"></i>My Projects
+                                </a>
+                                <a href="{% url 'my_donations' %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-donate me-1"></i>My Donations
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="bg-light p-3 rounded">
+                                    <h4 class="text-primary">{{ projects_count }}</h4>
+                                    <p class="mb-0">Projects Created</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-5">
+        <div class="col-md-4">
+            <div class="card text-center project-card">
+                <div class="card-body">
+                    <h3 class="text-success">{{ donations_count }}</h3>
+                    <p class="text-muted">Total Donations Made</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center project-card">
+                <div class="card-body">
+                    <h3 class="text-primary">{{ total_donated }} EGP</h3>
+                    <p class="text-muted">Total Amount Donated</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center project-card">
+                <div class="card-body">
+                    <h3 class="text-info">{{ user.date_joined|date:"M Y" }}</h3>
+                    <p class="text-muted">Member Since</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="row">
+        <!-- Personal Information -->
+        <div class="col-md-6">
+            <div class="card project-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-user me-2"></i>Personal Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>First Name:</strong><br>{{ user.first_name }}</p>
+                            <p><strong>Last Name:</strong><br>{{ user.last_name }}</p>
+                            <p><strong>Email:</strong><br>{{ user.email }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Mobile Phone:</strong><br>{{ user.mobile_phone }}</p>
+                            {% if user.birthdate %}
+                                <p><strong>Birthdate:</strong><br>{{ user.birthdate }}</p>
+                            {% endif %}
+                            {% if user.country %}
+                                <p><strong>Country:</strong><br>{{ user.country }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if user.facebook_profile %}
+                    <p>
+                        <strong>Facebook Profile:</strong><br>
+                        <a href="{{ user.facebook_profile }}" target="_blank" class="text-decoration-none">
+                            <i class="fab fa-facebook me-1"></i>View Profile
+                        </a>
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="col-md-6">
+            <!-- Recent Projects -->
+            <div class="card project-card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-project-diagram me-2"></i>Recent Projects</h5>
+                    <a href="{% url 'my_projects' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if user_projects %}
+                        <div class="list-group">
+                            {% for project in user_projects|slice:":5" %}
+                                <a href="{% url 'project_detail' project.id %}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">{{ project.title }}</h6>
+                                        <small class="text-muted">{{ project.created_at|date:"M d, Y" }}</small>
+                                    </div>
+                                    <p class="mb-1">{{ project.details|truncatewords:15 }}</p>
+                                    <small class="text-muted">
+                                        Status: 
+                                        <span class="badge bg-{% if project.status == 'active' %}success{% elif project.status == 'completed' %}primary{% else %}warning{% endif %}">
+                                            {{ project.get_status_display }}
+                                        </span>
+                                    </small>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">You haven't created any projects yet.</p>
+                        <a href="{% url 'project_create' %}" class="btn btn-primary">Create Your First Project</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Donations -->
+            <div class="card project-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-donate me-2"></i>Recent Donations</h5>
+                    <a href="{% url 'my_donations' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if user_donations %}
+                        <div class="list-group">
+                            {% for donation in user_donations|slice:":5" %}
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">Donated to {{ donation.project.title }}</h6>
+                                        <strong class="text-success">{{ donation.amount }} EGP</strong>
+                                    </div>
+                                    <small class="text-muted">Donated on: {{ donation.donated_at|date:"M d, Y" }}</small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">You haven't made any donations yet.</p>
+                        <a href="{% url 'project_list' %}" class="btn btn-primary">Browse Projects</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Management -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card project-card">
+                <div class="card-header">
+                    <h5><i class="fas fa-cog me-2"></i>Account Management</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'edit_profile' %}" class="btn btn-outline-primary" id="down">
+                            <i class="fas fa-edit me-1 do"></i>Edit Profile
+                        </a>
+                        <a href="{% url 'change_password' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-key me-1"></i>Change Password
+                        </a>
+                        <a href="{% url 'delete_account' %}" class="btn btn-outline-danger">
+                            <i class="fas fa-trash me-1"></i>Delete Account
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Apply the theme to profile page */
+    .card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .card-header {
+        background: linear-gradient(to right, var(--primary), var(--secondary));
+        color: white;
+        border: none;
+        font-weight: 500;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(to right, var(--primary), var(--secondary));
+        border: none;
+        border-radius: 50px;
+        font-weight: 500;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(to right, var(--secondary), var(--primary));
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+    
+    .btn-outline-primary {
+        border: 2px solid var(--primary);
+        color: var(--primary);
+        border-radius: 50px;
+        font-weight: 500;
+    }
+    
+    .btn-outline-primary:hover {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .list-group-item {
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        margin-bottom: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .list-group-item:hover {
+        border-color: var(--primary);
+        box-shadow: 0 2px 8px rgba(78, 84, 200, 0.2);
+    }
+    
+    .badge {
+        border-radius: 20px;
+        padding: 6px 12px;
+        font-weight: 500;
+    }
+    
+    .bg-light {
+        background-color: #f8f9fa !important;
+    }
+    
+    .rounded-circle {
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    #down{
+        border-radius: 0px;
+    }
+</style>
+{% endblock %}

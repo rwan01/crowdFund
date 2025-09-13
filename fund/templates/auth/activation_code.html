@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">Activate Your Account</h3>
+            </div>
+            <div class="card-body">
+                {% if messages %}
+                <div class="alert alert-info">
+                    {% for message in messages %}
+                        {{ message }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               value="{{ email|default:'' }}" required placeholder="Enter your email">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="activation_code" class="form-label">Activation Code</label>
+                        <input type="text" class="form-control" id="activation_code" name="activation_code" 
+                               required placeholder="Enter 6-digit code" maxlength="6" pattern="[0-9]{6}">
+                        <div class="form-text">Check your email for the 6-digit activation code.</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">Activate Account</button>
+                </form>
+                
+                <div class="text-center mt-3">
+                    <p>Didn't receive the code? 
+                        <a href="{% url 'resend_activation_code' %}" class="resend-link">Resend Activation Code</a>
+                    </p>
+                    <p>Or <a href="{% url 'login' %}">Login</a> if you already have an activated account.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.resend-link {
+    color: #007bff;
+    text-decoration: none;
+}
+.resend-link:hover {
+    text-decoration: underline;
+}
+</style>
+{% endblock %}

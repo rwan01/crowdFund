@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block search_bar %}
+<!-- Empty block: hide search bar on login -->
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="background: linear-gradient(135deg, rgba(78, 84, 200, 0.03) 0%, rgba(143, 148, 251, 0.05) 100%); min-height: calc(100vh - 76px); display: flex; justify-content: center; align-items: center;">
+    <div class="col-xl-9 col-lg-10 col-md-11">
+        <div class="card shadow-lg border-0 overflow-hidden" style="max-height: 90vh;">
+            <div class="row g-0 h-100">
+
+                <!-- Image column -->
+                <div class="col-lg-6 d-none d-lg-block">
+                    <div class="h-100" style="background: linear-gradient(rgba(78, 84, 200, 0.7), rgba(143, 148, 251, 0.7)), url('https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=700&q=80'); background-size: cover; background-position: center;">
+                        <div class="d-flex flex-column justify-content-center align-items-center text-center h-100 p-4 text-white">
+                            <h3 class="mb-3 fw-bold">Create Your Account</h3>
+                            <p class="fs-6">Join CrowdFund today and start supporting or launching amazing projects!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form column -->
+                <!-- Form column -->
+<div class="col-lg-6 d-flex align-items-center">
+    <div class="card-body p-4 overflow-auto" style="max-height: 90vh;">
+
+                        <div class="text-center mb-3">
+                            <h3 class="fw-bold text-primary">Register</h3>
+                            <p class="text-muted">Create your account to get started</p>
+                        </div>
+
+                        {% if form.errors %}
+                            <div class="alert alert-danger py-2">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                Please correct the errors below.
+                            </div>
+                        {% endif %}
+
+                        <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                            {% csrf_token %}
+
+                            <!-- First & Last name -->
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.first_name.id_for_label }}" class="form-label fw-semibold">First Name</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-user text-primary"></i></span>
+                                        {{ form.first_name }}
+                                    </div>
+                                    {% if form.first_name.errors %}
+                                        <div class="text-danger small">{{ form.first_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.last_name.id_for_label }}" class="form-label fw-semibold">Last Name</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-user text-primary"></i></span>
+                                        {{ form.last_name }}
+                                    </div>
+                                    {% if form.last_name.errors %}
+                                        <div class="text-danger small">{{ form.last_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Email & Mobile -->
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold">Email</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-envelope text-primary"></i></span>
+                                        {{ form.email }}
+                                    </div>
+                                    {% if form.email.errors %}
+                                        <div class="text-danger small">{{ form.email.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.mobile_phone.id_for_label }}" class="form-label fw-semibold">Mobile Phone</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-mobile-alt text-primary"></i></span>
+                                        {{ form.mobile_phone }}
+                                    </div>
+                                    {% if form.mobile_phone.errors %}
+                                        <div class="text-danger small">{{ form.mobile_phone.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Password & Confirm -->
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.password1.id_for_label }}" class="form-label fw-semibold">Password</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-lock text-primary"></i></span>
+                                        {{ form.password1 }}
+                                    </div>
+                                    {% if form.password1.errors %}
+                                        <div class="text-danger small">{{ form.password1.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ form.password2.id_for_label }}" class="form-label fw-semibold">Confirm Password</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light"><i class="fas fa-lock text-primary"></i></span>
+                                        {{ form.password2 }}
+                                    </div>
+                                    {% if form.password2.errors %}
+                                        <div class="text-danger small">{{ form.password2.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Profile picture (optional) -->
+<!-- Profile picture (optional) -->
+{% if form.profile_picture %}
+<div class="mb-3">
+    <label for="{{ form.profile_picture.id_for_label }}" class="form-label fw-semibold">Profile Picture</label>
+    <div class="custom-file-upload">
+        <input type="file" name="{{ form.profile_picture.name }}" id="{{ form.profile_picture.id_for_label }}" class="form-control d-none" accept="image/*" onchange="previewImage(event)">
+        <label for="{{ form.profile_picture.id_for_label }}" class="btn btn-outline-primary w-100">
+            <i class="fas fa-upload me-2"></i> Choose Picture
+        </label>
+        <small id="file-name" class="text-muted d-block mt-1"></small>
+    </div>
+    <!-- Preview -->
+    <div class="mt-2 text-center">
+        <img id="preview" src="#" alt="Preview" class="img-thumbnail d-none" style="max-width: 120px; border-radius: 8px;">
+    </div>
+    {% if form.profile_picture.errors %}
+        <div class="text-danger small">{{ form.profile_picture.errors }}</div>
+    {% endif %}
+</div>
+{% endif %}
+
+
+                            <button type="submit" class="btn btn-primary w-75 mx-auto d-block py-2 fw-semibold">
+                                <i class="fas fa-user-plus me-2"></i> Register
+                            </button>
+                        </form>
+
+                        <div class="text-center mt-3">
+                            <p class="mb-0 fs-6">Already have an account? 
+                                <a href="{% url 'login' %}" class="text-decoration-none fw-semibold text-primary">Login Here</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div> 
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border-radius: 16px;
+}
+.input-group-text {
+    border-right: none;
+}
+.form-control,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="file"],
+input[type="tel"] {
+    border-left: none;
+    padding-left: 0;
+    border-radius: 0 !important;
+    height: calc(2.25rem + 2px);
+}
+.input-group {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    transition: all 0.3s ease;
+}
+.input-group:focus-within {
+    box-shadow: 0 0 0 0.25rem rgba(78, 84, 200, 0.25);
+    border-color: var(--primary);
+}
+.btn-primary {
+    background: linear-gradient(to right, var(--primary), var(--secondary));
+    border: none;
+}
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.custom-file-upload label {
+    cursor: pointer;
+}
+.custom-file-upload input {
+    display: none;
+}
+</style>
+<script>
+function previewImage(event) {
+    const input = event.target;
+    const fileName = input.files[0] ? input.files[0].name : "";
+    document.getElementById("file-name").textContent = fileName;
+
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById("preview");
+            preview.src = e.target.result;
+            preview.classList.remove("d-none");
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
+
+{% endblock %}

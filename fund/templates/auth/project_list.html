@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}All Projects - CrowdFund{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="display-5 fw-bold">Browser Projects</h1>
+                <span class="badge bg-primary fs-6">{{ total_projects }} projects</span>
+            </div>
+            <p class="text-muted">Discover amazing projects and support their creators</p>
+        </div>
+    </div>
+
+   <!-- Filters and Search -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card project-card">
+            <div class="card-body">
+                <form method="get" class="row g-3 align-items-center">
+                    <!-- Search by Name/Description -->
+                    <div class="col-md-3">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" name="search" placeholder="Search name or tag ..." value="{{ search_query|default:'' }}">
+                        </div>
+                    </div>
+                    
+                    <!-- Category Filter -->
+                    <div class="col-md-2">
+                        <select class="form-select" name="category">
+                            <option value="">All Categories</option>
+                            {% for value, name in categories %}
+                            <option value="{{ value }}" {% if current_category == value %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Status Filter -->
+                    <div class="col-md-2">
+                        <select class="form-select" name="status">
+                            <option value="">All Status</option>
+                            {% for value, name in status_choices %}
+                                {% if value != 'canceled' %}
+                                <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ name }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Sort -->
+                    <div class="col-md-2">
+                        <select class="form-select" name="sort">
+                            <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest</option>
+                            <option value="oldest" {% if current_sort == 'oldest' %}selected{% endif %}>Oldest</option>
+                            <option value="highest_funded" {% if current_sort == 'highest_funded' %}selected{% endif %}>Highest Funded</option>
+                            <option value="most_popular" {% if current_sort == 'most_popular' %}selected{% endif %}>Most Popular</option>
+                            <option value="ending_soon" {% if current_sort == 'ending_soon' %}selected{% endif %}>Ending Soon</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Apply Button -->
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-primary w-100">Apply</button>
+                    </div>
+                    
+                    <!-- Clear Button -->
+                    <div class="col-md-1">
+                        <a href="{% url 'project_list' %}" class="btn btn-primary w-100" style="background: linear-gradient(to right, #dc3545, #e4606d); border: none;">
+                            Clear
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+    <!-- Tag Cloud -->
+    {% if all_tags %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card project-card">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Popular Tags:</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for tag in all_tags %}
+                        <a href="?tag={{ tag.name }}" class="badge bg-secondary text-decoration-none">
+                            {{ tag.name }} {% if tag.project_count %}<small>({{ tag.project_count }})</small>{% endif %}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Active Search Filters -->
+    {% if search_query or tag_query or current_category or current_status %}
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="alert alert-info py-2">
+                <small>
+                    <strong>Active filters:</strong>
+                    {% if search_query %}<span class="badge bg-info me-1">Search: "{{ search_query }}"</span>{% endif %}
+                    {% if tag_query %}<span class="badge bg-info me-1">Tag: "{{ tag_query }}"</span>{% endif %}
+                    {% if current_category %}<span class="badge bg-info me-1">Category: {{ current_category }}</span>{% endif %}
+                    {% if current_status %}<span class="badge bg-info me-1">Status: {{ current_status }}</span>{% endif %}
+                    <a href="{% url 'project_list' %}" class="text-white ms-2">Clear all</a>
+                </small>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+  <!-- Projects Grid -->
+{% if page_obj %}
+<div class="row">
+    {% for project in page_obj %}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <div class="card h-100 project-card">
+            <!-- Project Image Container (with relative positioning) -->
+            <div class="position-relative">
+                {% if project.image %}
+                <img src="{{ project.image.url }}" class="card-img-top" alt="{{ project.title }}" style="height: 200px; object-fit: cover;">
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                    <i class="fas fa-image fa-3x text-muted"></i>
+                </div>
+                {% endif %}
+                
+                <!-- Project Status Badge (positioned absolutely within the image container) -->
+                <span class="position-absolute top-0 end-0 m-2 badge bg-{% if project.status == 'active' %}success{% elif project.status == 'completed' %}primary{% else %}warning{% endif %}">
+                    {{ project.get_status_display }}
+                </span>
+            </div>
+            
+            <div class="card-body">
+                <!-- Project Title and Category -->
+                <h5 class="card-title">{{ project.title }}</h5>
+                <span class="badge bg-secondary mb-2">{{ project.get_category_display }}</span>
+                
+                <!-- Project Tags -->
+                {% if project.tags.all %}
+                <div class="mb-2">
+                    {% for tag in project.tags.all|slice:":3" %}
+                    <span class="badge bg-light text-dark me-1 small">#{{ tag.name }}</span>
+                    {% endfor %}
+                    {% if project.tags.all.count > 3 %}
+                    <span class="badge bg-light text-dark small">+{{ project.tags.all.count|add:"-3" }} more</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- Project Description Excerpt -->
+<p class="card-text text-muted small text-truncate-1">
+    {{ project.description }}
+</p>
+
+                
+                <!-- Progress Bar -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="text-success fw-bold">{{ project.current_donations }} EGP</span>
+                        <span class="text-muted small">{{ project.donation_progress|floatformat:0 }}%</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: {{ project.donation_progress }}%;" 
+                             aria-valuenow="{{ project.donation_progress }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                    <small class="text-muted">of {{ project.target_amount }} EGP</small>
+                </div>
+                
+                <!-- Project Stats -->
+                <div class="d-flex justify-content-between text-muted small mb-3">
+                    <span>
+                        <i class="fas fa-users me-1"></i>
+                        {{ project.donations.count }} supporters
+                    </span>
+                    <span>
+                        <i class="fas fa-clock me-1"></i>
+                        {% if project.is_running %}
+                            {{ project.end_date|timeuntil }} left
+                        {% else %}
+                            Ended
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="card-footer bg-transparent">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        By {{ project.creator.get_full_name }}
+                    </small>
+                    <a href="{% url 'project_detail' project.id %}" class="btn btn-primary btn-sm">
+                        View Project
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="Project pagination">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if tag_query %}tag={{ tag_query }}&{% endif %}{% if current_category %}category={{ current_category }}&{% endif %}{% if current_status %}status={{ current_status }}&{% endif %}{% if current_sort %}sort={{ current_sort }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% else %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if tag_query %}tag={{ tag_query }}&{% endif %}{% if current_category %}category={{ current_category }}&{% endif %}{% if current_status %}status={{ current_status }}&{% endif %}{% if current_sort %}sort={{ current_sort }}&{% endif %}page={{ num }}">{{ num }}</a>
+                </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if tag_query %}tag={{ tag_query }}&{% endif %}{% if current_category %}category={{ current_category }}&{% endif %}{% if current_status %}status={{ current_status }}&{% endif %}{% if current_sort %}sort={{ current_sort }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <!-- No Projects Found -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card project-card text-center py-5">
+                <div class="card-body">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h4>No projects found</h4>
+                    <p class="text-muted">Try adjusting your search filters or check back later for new projects.</p>
+                    <a href="{% url 'project_list' %}" class="btn btn-primary">Clear Filters</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .project-card {
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        border: none;
+        border-radius: 10px;
+        transition: transform 0.3s ease;
+    }
+    
+    .project-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    }
+    
+    .progress-bar {
+        background: linear-gradient(to right, var(--primary), var(--secondary));
+        border-radius: 4px;
+    }
+    
+    .badge.bg-secondary {
+        background: linear-gradient(to right, var(--primary), var(--secondary)) !important;
+    }
+    
+    .card-img-overlay .badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    
+    /* Tag cloud styles */
+    .badge.bg-secondary:hover {
+        background-color: #6c757d !important;
+        transform: translateY(-1px);
+    }
+    .text-truncate-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;   /* show only 1 line */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+</style>
+{% endblock %}
