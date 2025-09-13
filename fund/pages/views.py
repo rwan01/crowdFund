@@ -209,7 +209,7 @@ def project_create_view(request):
                 # Set initial status based on start date
                 now = timezone.now()
                 if project.start_date > now:
-                    project.status = 'active'  # Projects starting in future are still 'active'
+                    project.status = 'coming_soon'  # Projects starting in future are still 'active'
                 else:
                     project.status = 'active'
                 
@@ -800,7 +800,11 @@ def public_profile_view(request, user_id):
     profile_user = get_object_or_404(CustomUser, id=user_id)
     
     # Only show basic information and projects
-    user_projects = Project.objects.filter(creator=profile_user, status='active').order_by('-created_at')
+    user_projects = Project.objects.filter(
+        creator=profile_user, 
+        status__in=['active', 'coming_soon','completed']  # Include both statuses
+    ).order_by('-created_at')
+    
     
     context = {
         'profile_user': profile_user,
@@ -808,6 +812,8 @@ def public_profile_view(request, user_id):
         'projects_count': user_projects.count(),
     }
     return render(request, 'auth/public_profile.html', context)
+
+
 
 def auth_page(request):
     """Combined login and registration page"""

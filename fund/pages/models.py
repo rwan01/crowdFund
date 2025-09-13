@@ -240,6 +240,7 @@ class Project(models.Model):
 
         # No images at all
         return None
+    ##########
     def update_status(self):
         """Update the project status based on current time, but preserve the original logic"""
         now = timezone.now()
@@ -256,7 +257,7 @@ class Project(models.Model):
             self.status = 'active'
         # If start date is in the future, keep as active (original behavior)
         else:
-            self.status = 'coming soon'
+            self.status = 'coming_soon'
             
         return self.status
     

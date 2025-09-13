@@ -180,21 +180,24 @@
                 </div>
                 
                 <!-- Project Stats -->
-                <div class="d-flex justify-content-between text-muted small mb-3">
-                    <span>
-                        <i class="fas fa-users me-1"></i>
-                        {{ project.donations.count }} supporters
-                    </span>
-                    <span>
-                        <i class="fas fa-clock me-1"></i>
-                        {% if project.is_running %}
-                            {{ project.end_date|timeuntil }} left
-                        {% else %}
-                            Ended
-                        {% endif %}
-                    </span>
-                </div>
+               <div class="d-flex justify-content-between text-muted small mb-3">
+    <span>
+        <i class="fas fa-users me-1"></i>
+        {{ project.donations.count }} supporters
+    </span>
+    <span>
+        <i class="fas fa-clock me-1"></i>
+        {% if project.status == 'coming_soon' %}
+            Starts in {{ project.start_date|timeuntil }}
+        {% elif project.status == 'active' %}
+            {{ project.end_date|timeuntil }} left
+        {% else %}
+            Ended
+        {% endif %}
+    </span>
+</div>
             </div>
+
             
             <div class="card-footer bg-transparent">
                 <div class="d-flex justify-content-between align-items-center">
