@@ -30,9 +30,6 @@ from .forms import CustomUserCreationForm, UserProfileEditForm, ProjectCreationF
 from .tokens import TokenService
 from .session_utils import set_admin_session, set_user_session, clear_admin_session, clear_user_session, get_admin_user, get_user_user, is_admin_logged_in, is_user_logged_in
 
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect
-
 
 
 
@@ -173,12 +170,12 @@ def logout_all_view(request):
     messages.success(request, 'You have been logged out from all sessions successfully.')
     return redirect('home')
 
-@login_required
 def admin_dashboard(request):
     # Only allow admin users to access this view
     admin_user = get_admin_user(request)
     if not admin_user or not (admin_user.is_staff or admin_user.is_superuser):
-        return HttpResponseForbidden("You don't have permission to access this page.")
+        messages.error(request, "You don't have permission to access this page.")
+        return redirect('admin_login')
     
     # Admin dashboard logic
     total_projects = Project.objects.count()
@@ -195,10 +192,6 @@ def admin_dashboard(request):
     return render(request, 'admin/dashboard.html', context)
 
 
-
-
-
-@login_required
 def project_create_view(request):
     # Only allow regular users to create projects
     user_user = get_user_user(request)
@@ -339,7 +332,6 @@ def project_list_view(request):
     return render(request, 'auth/project_list.html', context)
 
 
-@login_required
 def profile_view(request):
     # Only allow regular users to access profile
     user_user = get_user_user(request)
@@ -361,7 +353,6 @@ def profile_view(request):
     return render(request, 'auth/profile.html', context)
 
 
-@login_required
 def edit_profile_view(request):
     user_user = get_user_user(request)
     if not user_user:
@@ -385,7 +376,6 @@ def edit_profile_view(request):
     return render(request, 'auth/edit_profile.html', {'form': form})
 
 
-@login_required
 def delete_account_view(request):
     user_user = get_user_user(request)
     if not user_user:
@@ -413,7 +403,6 @@ def delete_account_view(request):
     return render(request, 'auth/delete_account.html', {'show_password_field': False})
 
 
-@login_required
 def my_projects_view(request):
     user_user = get_user_user(request)
     if not user_user:
@@ -423,7 +412,6 @@ def my_projects_view(request):
     user_projects = Project.objects.filter(creator=user_user).order_by('-created_at')
     return render(request, 'auth/my_projects.html', {'projects': user_projects})
 
-@login_required
 def my_donations_view(request):
     user_user = get_user_user(request)
     if not user_user:
@@ -518,7 +506,6 @@ def password_reset_confirm(request, token):  # token will be a UUID object
     return render(request, 'auth/password_reset_confirm.html', {'token': token})
 
 
-@login_required
 def change_password_view(request):
     user_user = get_user_user(request)
     if not user_user:
@@ -529,8 +516,8 @@ def change_password_view(request):
         form = PasswordChangeForm(user_user, request.POST)
         if form.is_valid():
             user = form.save()
-            # Update session to prevent logout
-            update_session_auth_hash(request, user)
+            # Update session to prevent logout - you might need to update your session here
+            # update_session_auth_hash(request, user)  # This is for Django's auth, you might need custom handling
             messages.success(request, 'Your password has been changed successfully!')
             return redirect('profile')
         else:
@@ -539,17 +526,6 @@ def change_password_view(request):
         form = PasswordChangeForm(user_user)
     
     return render(request, 'auth/change_password.html', {'form': form})
-
-
-
-
-
-
-
-
-
-
-
 
 
 def project_detail_view(request, project_id):
@@ -731,7 +707,6 @@ def project_detail_view(request, project_id):
     return render(request, 'auth/project_detail.html', context)
 
     
-@login_required
 def report_comment_view(request, comment_id):
     """View to report a comment"""
     comment = get_object_or_404(Comment, id=comment_id)
@@ -767,10 +742,14 @@ def report_comment_view(request, comment_id):
     return redirect('project_detail', project_id=comment.project.id)
 
 
-@login_required
 def donate_view(request, project_id):
     """Simple donation view - you can expand this later"""
     project = get_object_or_404(Project, id=project_id)
+    user_user = get_user_user(request)
+    
+    if not user_user:
+        messages.error(request, 'Please log in to make a donation.')
+        return redirect('login')
     
     if request.method == 'POST':
         amount = request.POST.get('amount')
@@ -780,7 +759,7 @@ def donate_view(request, project_id):
                 if amount > 0:
                     # Create donation
                     donation = Donation.objects.create(
-                        user=get_user_user(request),
+                        user=user_user,
                         project=project,
                         amount=amount
                     )
@@ -792,7 +771,6 @@ def donate_view(request, project_id):
     messages.error(request, 'Invalid donation request.')
     return redirect('project_detail', project_id=project.id)
 
-@login_required
 def delete_project_view(request, project_id):
     """Delete a project if donations are less than 25%"""
     project = get_object_or_404(Project, id=project_id)
