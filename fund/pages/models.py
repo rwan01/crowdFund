@@ -113,6 +113,7 @@ class Tag(models.Model):
 class Project(models.Model):
     # Project status choices
     STATUS_CHOICES = [
+        ('coming_soon', 'Coming Soon'),
         ('active', 'Active'),
         ('canceled', 'Canceled'),
         ('completed', 'Completed'),
@@ -146,7 +147,7 @@ class Project(models.Model):
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
     image = models.ImageField(upload_to='project_images/', blank=True, null=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='active')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     is_featured = models.BooleanField(default=False)
     tags = models.ManyToManyField(Tag, blank=True)
     creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='projects')
@@ -189,17 +190,10 @@ class Project(models.Model):
         if self.start_date is not None and self.end_date is not None:
             if self.end_date <= self.start_date:
                 raise ValidationError("End date must be after start date.")
-            
-            # Check if start date is in the future
-            if self.start_date <= timezone.now():
-                raise ValidationError("Start date must be in the future.")
-        else:
-            # If dates are None, we'll let field validation handle the required field error
-            pass
         
         if self.target_amount is not None and self.target_amount <= 0:
             raise ValidationError("Target amount must be greater than zero.")
-    
+        
     def save(self, *args, **kwargs):
         # Only run full validation if the instance is being created or dates/target are being changed
         if not self.pk or any(field in kwargs.get('update_fields', []) for field in ['start_date', 'end_date', 'target_amount']):
@@ -262,7 +256,7 @@ class Project(models.Model):
             self.status = 'active'
         # If start date is in the future, keep as active (original behavior)
         else:
-            self.status = 'active'
+            self.status = 'coming soon'
             
         return self.status
     
@@ -310,6 +304,7 @@ class Project(models.Model):
     @property
     def total_donations_count(self):
         return self.donations.count()
+    
 
 
 # Model for project images (optional if you want multiple images per project)
