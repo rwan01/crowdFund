@@ -284,7 +284,6 @@ def project_list_view(request):
     if search:
         projects = projects.filter(
             Q(title__icontains=search) |
-            Q(description__icontains=search) |
             Q(tags__name__icontains=search)
         ).distinct()
     
@@ -423,26 +422,23 @@ def my_donations_view(request):
 
 
 def home_view(request):
-    # Get highest five rated running projects
+    # Top 5 rated **active** projects
     top_rated_projects = Project.objects.filter(
         status='active',
-        end_date__gte=timezone.now()
+        end_date__gte=timezone.now()  # optional: only ongoing
     ).annotate(
         avg_rating=Avg('ratings__value')
     ).order_by('-avg_rating')[:5]
     
-    # Get latest 5 projects
-    latest_projects = Project.objects.filter(
-        status='active'
-    ).order_by('-created_at')[:5]
+    # Latest 5 projects (all statuses)
+    latest_projects = Project.objects.order_by('-created_at')[:5]
     
-    # Get latest 5 featured projects
+    # Latest 5 featured projects (all statuses)
     featured_projects = Project.objects.filter(
-        status='active',
         is_featured=True
     ).order_by('-created_at')[:5]
     
-    # Get all categories for the dropdown
+    # All categories for dropdown
     categories = Project.CATEGORY_CHOICES
     
     context = {
@@ -528,8 +524,12 @@ def change_password_view(request):
     return render(request, 'auth/change_password.html', {'form': form})
 
 
+# Fixed Project Detail View
 def project_detail_view(request, project_id):
     """View for individual project details with reply functionality"""
+    # Update project statuses first
+    update_project_statuses()
+    
     project = get_object_or_404(Project, id=project_id)
     
     user_user = get_user_user(request)
@@ -705,6 +705,120 @@ def project_detail_view(request, project_id):
     }
     
     return render(request, 'auth/project_detail.html', context)
+# Updated functions with proper timezone handling
+
+def update_project_statuses():
+    """Update project statuses based on current date and time"""
+    from django.utils import timezone
+    now = timezone.now()
+    
+    print(f"Current time (timezone aware): {now}")  # Debug line
+    
+    # Update projects from 'coming_soon' to 'active' when start_date is reached
+    coming_soon_projects = Project.objects.filter(status='coming_soon')
+    for project in coming_soon_projects:
+        print(f"Project: {project.title}, Start: {project.start_date}, Now: {now}, Start <= Now: {project.start_date <= now}")  # Debug
+        
+    updated_to_active = Project.objects.filter(
+        status='coming_soon',
+        start_date__lte=now
+    ).update(status='active')
+    
+    print(f"Updated {updated_to_active} projects to active")  # Debug
+    
+    # Update projects from 'active' to 'completed' when end_date is reached
+    updated_to_completed = Project.objects.filter(
+        status='active',
+        end_date__lte=now
+    ).update(status='completed')
+    
+    print(f"Updated {updated_to_completed} projects to completed")  # Debug
+
+def project_create_view(request):
+    # Only allow regular users to create projects
+    user_user = get_user_user(request)
+    if not user_user:
+        messages.error(request, 'Please log in as a regular user to create projects.')
+        return redirect('login')
+    
+    if request.method == 'POST':
+        form = ProjectCreationForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                project = form.save(commit=False)
+                project.creator = user_user
+                
+                # Set initial status based on start date
+                from django.utils import timezone
+                now = timezone.now()
+                
+                # Ensure start_date is timezone-aware
+                if project.start_date.tzinfo is None:
+                    from django.utils.timezone import make_aware
+                    project.start_date = make_aware(project.start_date)
+                
+                # Ensure end_date is timezone-aware  
+                if project.end_date.tzinfo is None:
+                    from django.utils.timezone import make_aware
+                    project.end_date = make_aware(project.end_date)
+                
+                print(f"Project start_date: {project.start_date}")  # Debug
+                print(f"Current now(): {now}")  # Debug
+                print(f"start_date > now: {project.start_date > now}")  # Debug
+                
+                if project.start_date > now:
+                    project.status = 'coming_soon'  # Future projects are coming soon
+                    print(f"Setting status to coming_soon")  # Debug
+                else:
+                    project.status = 'active'  # Projects starting now or in the past are active
+                    print(f"Setting status to active")  # Debug
+                
+                # Save the project (this will trigger model validation)
+                project.save()
+                
+                # Save many-to-many relationships (existing tags)
+                form.save_m2m()
+                
+                # Handle new tags
+                new_tags = form.cleaned_data.get('new_tags', [])
+                for tag_name in new_tags:
+                    tag, created = Tag.objects.get_or_create(name=tag_name.lower())
+                    project.tags.add(tag)
+                
+                # Handle multiple images if provided
+                additional_images = request.FILES.getlist('additional_images')
+                if additional_images:
+                    for i, image in enumerate(additional_images):
+                        # Set first additional image as primary if no main image was uploaded
+                        is_primary = (i == 0 and not project.image)
+                        ProjectPicture.objects.create(
+                            project=project, 
+                            image=image, 
+                            is_primary=is_primary
+                        )
+                
+                messages.success(request, 'Project created successfully!')
+                return redirect('my_projects')
+                
+            except ValidationError as e:
+                # Handle model validation errors
+                for error in e.messages:
+                    messages.error(request, error)
+            except Exception as e:
+                messages.error(request, f'Error creating project: {str(e)}')
+        else:
+            # Display form errors
+            for field, errors in form.errors.items():
+                for error in errors:
+                    if field == '__all__':
+                        messages.error(request, error)
+                    else:
+                        messages.error(request, f"{field}: {error}")
+    else:
+        form = ProjectCreationForm()
+    
+    return render(request, 'auth/project_create.html', {'form': form})
+
 
     
 def report_comment_view(request, comment_id):

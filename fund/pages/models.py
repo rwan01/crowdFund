@@ -63,8 +63,7 @@ class CustomUser(AbstractUser):
     mobile_phone = models.CharField(
         _('mobile phone'),
         validators=[phone_regex], 
-        max_length=11, 
-        unique=True
+        max_length=11
     )
     
     # Optional fields
@@ -159,13 +158,12 @@ class Project(models.Model):
         from decimal import Decimal
         return self.donations.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
     
-    
     # Calculate donation progress percentage
     def donation_progress(self):
         current = self.current_donations()
         if self.target_amount and current:
             return (current / self.target_amount) * 100
-        return 
+        return 0
     
     # Check if project can be canceled (donations < 25% of target)
     def can_cancel(self):
@@ -193,12 +191,6 @@ class Project(models.Model):
         
         if self.target_amount is not None and self.target_amount <= 0:
             raise ValidationError("Target amount must be greater than zero.")
-        
-    def save(self, *args, **kwargs):
-        # Only run full validation if the instance is being created or dates/target are being changed
-        if not self.pk or any(field in kwargs.get('update_fields', []) for field in ['start_date', 'end_date', 'target_amount']):
-            self.full_clean()
-        super().save(*args, **kwargs)
     
     def __str__(self):
         return self.title
@@ -216,6 +208,7 @@ class Project(models.Model):
     def is_funded(self):
         """Check if project has reached its funding goal"""
         return self.current_donations() >= self.target_amount
+    
     @property
     def main_image(self):
         """
@@ -240,26 +233,10 @@ class Project(models.Model):
 
         # No images at all
         return None
-    ##########
-    def update_status(self):
-        """Update the project status based on current time, but preserve the original logic"""
-        now = timezone.now()
-        
-        # If project is canceled, don't change status
-        if self.status == 'canceled':
-            return self.status
-            
-        # If end date has passed, mark as completed
-        if now > self.end_date:
-            self.status = 'completed'
-        # If within the project timeframe, ensure it's active
-        elif now >= self.start_date and now <= self.end_date:
-            self.status = 'active'
-        # If start date is in the future, keep as active (original behavior)
-        else:
-            self.status = 'coming_soon'
-            
-        return self.status
+    
+    @property
+    def total_donations_count(self):
+        return self.donations.count()
     
     def get_days_remaining_display(self):
         """Get a user-friendly display of days remaining that works with status updates"""
@@ -295,17 +272,10 @@ class Project(models.Model):
             return "Ended"
     
     def save(self, *args, **kwargs):
-        # Update status before saving
-        self.update_status()
-        
         # Only run full validation if the instance is being created or dates/target are being changed
         if not self.pk or any(field in kwargs.get('update_fields', []) for field in ['start_date', 'end_date', 'target_amount']):
             self.full_clean()
         super().save(*args, **kwargs)
-    @property
-    def total_donations_count(self):
-        return self.donations.count()
-    
 
 
 # Model for project images (optional if you want multiple images per project)
